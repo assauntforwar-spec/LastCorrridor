@@ -1,0 +1,33 @@
+name: Build Game
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download LÖVE
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/love2d/love/releases/download/11.5/love-11.5-win64.zip" -OutFile "love.zip"
+          Expand-Archive -Path "love.zip" -DestinationPath "."
+          Rename-Item -Path "love-11.5-win64" -NewName "love"
+
+      - name: Create .love file
+        run: |
+          Compress-Archive -Path "main.lua","conf.lua","src","assets" -DestinationPath "judgement.zip"
+          Rename-Item -Path "judgement.zip" -NewName "judgement.love"
+
+      - name: Build .exe
+        run: |
+          copy /b love\love.exe+judgement.love judgement.exe
+
+      - name: Upload .exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: judgement-windows
+          path: judgement.exe
